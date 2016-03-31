@@ -23,7 +23,7 @@
   (createBindings [_] (javax.script.SimpleBindings.))
   (getBindings [_ ctx] (.getBindings @context ctx))
   (setBindings [_ binds ctx] (.setBindings @context binds ctx))
-  (put [self k v] (.put (.getBindings self) k v))
+  (put [self k v] (.put (.getBindings self javax.script.ScriptContext/ENGINE_SCOPE) k v))
   (eval ^Object [self ^String script] (eval (read-string script)))
   (eval ^Object [self ^String script ^Bindings binds]
     (doseq [[k v] (->> binds seq (apply conj {}))]
@@ -32,11 +32,12 @@
         (create-ns ns)
         (intern ns name v)))
     (.eval self script))
-  (eval ^Object [self ^String script ^ScriptContext ctx] (.eval self script (.getBindings ctx)))
+  (eval ^Object [self ^String script ^ScriptContext ctx] 
+    (.eval self script (.getBindings @context javax.script.ScriptContext/ENGINE_SCOPE)))
   (eval ^Object [self ^java.io.Reader script] (.eval self (slurp script)))
   (eval ^Object [self ^java.io.Reader script ^Bindings binds] (.eval self (slurp script) binds))
-  (eval ^Object [self ^java.io.Reader script ^ScriptContext ctx] (.eval self (slurp script) (.getBindings ctx)))
-  )
+  (eval ^Object [self ^java.io.Reader script ^ScriptContext ctx]
+    (.eval self (slurp script) (.getBindings @context javax.script.ScriptContext/ENGINE_SCOPE))))
 
 (deftype ClojureScriptEngineFactory []
   javax.script.ScriptEngineFactory
@@ -44,7 +45,7 @@
   (getEngineName [_] "Clojure Scripting Engine")
   (getEngineVersion [_] "1.4")
   (getLanguageName [_] "Clojure")
-  (getLanguageVersion [_] "1.4")
+  (getLanguageVersion [_] "1.8")
   (getExtensions [_] ["clj"])
   (getMimeTypes [_] ["application/clojure" "text/clojure"])
   (getNames [_] ["clojure" "Clojure"])
